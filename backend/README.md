@@ -1,11 +1,356 @@
+# 🔧 Backend API - Microcréditos
 
-  # Microcréditos Web Platform Design
+API REST para la plataforma de gestión de microcréditos, construida con Node.js, Express y MySQL.
 
-  This is a code bundle for Microcréditos Web Platform Design. The original project is available at https://www.figma.com/design/vM7toaGLxucqeBjJ1Ma7tx/Microcr%C3%A9ditos-Web-Platform-Design.
+## 🚀 Tecnologías
 
-  ## Running the code
+- **Node.js** - Runtime de JavaScript
+- **Express** - Framework web
+- **Sequelize** - ORM para MySQL
+- **MySQL** - Base de datos (XAMPP)
+- **JWT** - Autenticación con tokens
+- **Bcrypt** - Hash de contraseñas
 
-  Run `npm i` to install the dependencies.
+## 📋 Requisitos Previos
 
-  Run `npm run dev` to start the development server.
-  
+- Node.js 18+ instalado
+- XAMPP con MySQL corriendo
+- Puerto 3306 disponible (MySQL)
+- Puerto 5000 disponible (API)
+
+## ⚙️ Instalación
+
+### 1. Instalar dependencias
+
+```bash
+cd backend
+npm install
+```
+
+### 2. Configurar variables de entorno
+
+Copia el archivo `.env.example` a `.env`:
+
+```bash
+copy .env.example .env
+```
+
+El archivo `.env` ya está configurado para XAMPP con valores por defecto:
+
+```env
+NODE_ENV=development
+PORT=5000
+
+# MySQL (XAMPP)
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=microcreditos_db
+DB_USER=root
+DB_PASSWORD=
+DB_DIALECT=mysql
+
+# JWT
+JWT_SECRET=microcreditos_secret_key_2024
+JWT_EXPIRE=7d
+
+# CORS
+CORS_ORIGIN=http://localhost:3000
+```
+
+### 3. Crear base de datos
+
+**Opción A: Usando phpMyAdmin (XAMPP)**
+
+1. Abre XAMPP Control Panel
+2. Inicia Apache y MySQL
+3. Abre http://localhost/phpmyadmin
+4. Ve a la pestaña "SQL"
+5. Copia y pega el contenido de `database/init.sql`
+6. Haz clic en "Continuar"
+
+**Opción B: Usando MySQL Workbench**
+
+1. Abre MySQL Workbench
+2. Conecta a localhost:3306 (usuario: root, sin contraseña)
+3. Abre el archivo `database/init.sql`
+4. Ejecuta el script
+
+### 4. Iniciar el servidor
+
+```bash
+# Modo desarrollo (con nodemon)
+npm run dev
+
+# Modo producción
+npm start
+```
+
+El servidor estará corriendo en `http://localhost:5000`
+
+## 📚 Endpoints de la API
+
+### Autenticación
+
+#### Registrar usuario
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "correo": "juan@example.com",
+  "telefono": "555-0123",
+  "password": "password123",
+  "departamento": "Santa Cruz",
+  "municipio": "Warnes",
+  "rol": "emprendedor"
+}
+```
+
+#### Login
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "correo": "juan@example.com",
+  "password": "password123"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "success": true,
+  "message": "Login exitoso",
+  "data": {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "correo": "juan@example.com",
+    "rol": "emprendedor"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### Obtener usuario actual
+
+```http
+GET /api/auth/me
+Authorization: Bearer {token}
+```
+
+### Solicitudes
+
+#### Listar solicitudes
+
+```http
+GET /api/solicitudes
+Authorization: Bearer {token}
+
+# Filtros opcionales:
+GET /api/solicitudes?estado=aprobado
+GET /api/solicitudes?emprendedor_id=1
+```
+
+#### Crear solicitud
+
+```http
+POST /api/solicitudes
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "datos_personales": {
+    "nombre": "Juan Pérez",
+    "cedula": "12345678",
+    "telefono": "555-0123",
+    "direccion": "Calle Principal 123",
+    "departamento": "Santa Cruz",
+    "municipio": "Warnes"
+  },
+  "datos_negocio": {
+    "tipo": "Agricultura",
+    "descripcion": "Producción de hortalizas",
+    "ingresoMensual": 2500,
+    "produccion": "500kg mensuales"
+  },
+  "datos_solicitud": {
+    "monto": 5000,
+    "plazoMeses": 12,
+    "motivo": "Compra de semillas"
+  }
+}
+```
+
+#### Actualizar solicitud
+
+```http
+PUT /api/solicitudes/:id
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "estado": "enviado",
+  "datos_solicitud": {
+    "monto": 6000,
+    "plazoMeses": 12,
+    "motivo": "Compra de semillas y fertilizantes"
+  }
+}
+```
+
+#### Aprobar solicitud (Evaluador/Admin)
+
+```http
+POST /api/solicitudes/:id/aprobar
+Authorization: Bearer {token}
+```
+
+### Cronogramas
+
+#### Obtener cronograma por ID
+
+```http
+GET /api/cronogramas/:id
+Authorization: Bearer {token}
+```
+
+#### Obtener cronograma por solicitud
+
+```http
+GET /api/cronogramas/solicitud/:solicitudId
+Authorization: Bearer {token}
+```
+
+#### Marcar cuota como pagada (Evaluador/Admin)
+
+```http
+PATCH /api/cronogramas/:id/cuotas/:cuotaId/pagar
+Authorization: Bearer {token}
+```
+
+## 🗂️ Estructura del Proyecto
+
+```
+backend/
+├── src/
+│   ├── config/
+│   │   ├── database.js       # Configuración de Sequelize
+│   │   └── config.json        # Config para Sequelize CLI
+│   ├── models/
+│   │   ├── index.js           # Inicialización de modelos
+│   │   ├── Rol.js
+│   │   ├── Usuario.js
+│   │   ├── Solicitud.js
+│   │   ├── Cronograma.js
+│   │   └── Cuota.js
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── solicitudes.controller.js
+│   │   └── cronogramas.controller.js
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── usuarios.routes.js
+│   │   ├── solicitudes.routes.js
+│   │   └── cronogramas.routes.js
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   ├── role.middleware.js
+│   │   └── error.middleware.js
+│   ├── utils/
+│   │   ├── cronograma.util.js  # Cálculo de cuotas
+│   │   └── scoring.util.js      # Cálculo de score
+│   └── server.js                # Servidor principal
+├── database/
+│   └── init.sql                 # Script de inicialización
+├── .env                         # Variables de entorno
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+## 🔐 Roles y Permisos
+
+### Emprendedor
+
+- ✅ Crear solicitudes
+- ✅ Ver sus propias solicitudes
+- ✅ Actualizar sus solicitudes (si están en borrador)
+- ✅ Ver sus cronogramas
+
+### Evaluador
+
+- ✅ Ver todas las solicitudes
+- ✅ Aprobar/rechazar solicitudes
+- ✅ Generar cronogramas
+- ✅ Marcar cuotas como pagadas
+
+### Admin
+
+- ✅ Todos los permisos de evaluador
+- ✅ Gestión de usuarios
+
+## 🧮 Cálculo de Cuotas
+
+El sistema utiliza el **sistema francés** (cuota fija) para calcular el cronograma de pagos:
+
+- Tasa de interés: 12% anual
+- Cuota mensual fija
+- Amortización de capital creciente
+- Intereses decrecientes
+
+## 📊 Sistema de Scoring
+
+El scoring automático evalúa solicitudes basándose en:
+
+1. **Capacidad de pago (40 puntos)**: Ratio cuota/ingreso
+2. **Monto vs ingresos (30 puntos)**: Ratio monto/ingresos anuales
+3. **Plazo (20 puntos)**: Plazo óptimo entre 6-12 meses
+4. **Tipo de negocio (10 puntos)**: Bonus para sectores prioritarios
+
+**Recomendaciones:**
+
+- Score ≥ 80: Aprobación recomendada
+- Score 60-79: Evaluación manual
+- Score 40-59: Evaluación detallada
+- Score < 40: Rechazo recomendado
+
+## 🧪 Probar la API
+
+### Usando Thunder Client (VS Code)
+
+1. Instala la extensión Thunder Client
+2. Importa la colección de endpoints
+3. Configura el token JWT en las variables
+
+### Usando Postman
+
+1. Importa la colección
+2. Configura el environment con `baseUrl = http://localhost:5000`
+3. Usa el token JWT en Authorization > Bearer Token
+
+## 🐛 Solución de Problemas
+
+### Error: Cannot connect to MySQL
+
+- Verifica que XAMPP esté corriendo
+- Verifica que MySQL esté en puerto 3306
+- Revisa las credenciales en `.env`
+
+### Error: Database does not exist
+
+- Ejecuta el script `database/init.sql` en phpMyAdmin
+
+### Error: Port 5000 already in use
+
+- Cambia el puerto en `.env`
+- O detén el proceso que usa el puerto 5000
+
+## 📝 Licencia
+
+Este proyecto es privado y está en desarrollo.
