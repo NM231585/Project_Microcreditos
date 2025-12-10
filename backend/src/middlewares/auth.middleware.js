@@ -1,17 +1,15 @@
 import jwt from 'jsonwebtoken';
-import models from '../models/index.js';
+import prisma from '../config/prisma.js';
 
-const { Usuario, Rol } = models;
-
-// Middleware para verificar JWT
 export const protect = async (req, res, next) => {
   let token;
 
-  // Verificar si el token está en el header
+  // Obtener token del header
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   }
 
+  // Verificar que el token existe
   if (!token) {
     return res.status(401).json({
       success: false,
@@ -24,22 +22,27 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Obtener usuario del token
-    req.user = await Usuario.findByPk(decoded.id, {
-      include: [{
-        model: Rol,
-        as: 'rol',
-        attributes: ['id', 'nombre']
-      }],
-      attributes: { exclude: ['password'] }
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: decoded.id },
+      include: {
+        rol: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        }
+      }
     });
 
-    if (!req.user) {
+    if (!usuario) {
       return res.status(401).json({
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'No autorizado, usuario no encontrado'
       });
     }
 
+    // Agregar usuario a la request
+    req.user = usuario;
     next();
   } catch (error) {
     return res.status(401).json({
@@ -49,4 +52,4 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export default { protect };
+export default protect;

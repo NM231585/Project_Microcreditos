@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { sequelize } from './config/database.js';
+import prisma from './config/prisma.js';
 
 // Importar rutas
 import authRoutes from './routes/auth.routes.js';
@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
   res.json({
     message: 'API de Microcréditos',
     version: '1.0.0',
+    orm: 'Prisma',
     endpoints: {
       auth: '/api/auth',
       usuarios: '/api/usuarios',
@@ -53,20 +54,15 @@ app.use(errorHandler);
 // Conectar a la base de datos y iniciar servidor
 const startServer = async () => {
   try {
-    // Probar conexión a la base de datos
-    await sequelize.authenticate();
-    console.log('✅ Conexión a MySQL establecida correctamente');
-
-    // Sincronizar modelos (solo en desarrollo)
-    if (process.env.NODE_ENV === 'development') {
-      // await sequelize.sync({ alter: true });
-      console.log('📊 Modelos sincronizados');
-    }
+    // Probar conexión a la base de datos con Prisma
+    await prisma.$connect();
+    console.log('✅ Conexión a MySQL establecida correctamente con Prisma');
 
     // Iniciar servidor
     app.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
       console.log(`📝 Modo: ${process.env.NODE_ENV}`);
+      console.log(`🔷 ORM: Prisma`);
     });
   } catch (error) {
     console.error('❌ Error al conectar a la base de datos:', error);

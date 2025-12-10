@@ -1,8 +1,6 @@
-import models from '../models/index.js';
+import prisma from '../config/prisma.js';
 import { calcularScore } from '../utils/scoring.util.js';
 import { calcularCuotas } from '../utils/cronograma.util.js';
-
-const { Solicitud, Usuario, Cronograma, Cuota } = models;
 
 // @desc    Obtener todas las solicitudes (o filtradas por usuario)
 // @route   GET /api/solicitudes
@@ -14,23 +12,30 @@ export const getSolicitudes = async (req, res, next) => {
 
     // Si es emprendedor, solo ver sus solicitudes
     if (req.user.rol.nombre === 'emprendedor') {
-      where.emprendedor_id = req.user.id;
+      where.emprendedorId = req.user.id;
     } else if (emprendedor_id) {
-      where.emprendedor_id = emprendedor_id;
+      where.emprendedorId = parseInt(emprendedor_id);
     }
 
     if (estado) {
       where.estado = estado;
     }
 
-    const solicitudes = await Solicitud.findAll({
+    const solicitudes = await prisma.solicitud.findMany({
       where,
-      include: [{
-        model: Usuario,
-        as: 'emprendedor',
-        attributes: ['id', 'nombre', 'correo', 'telefono']
-      }],
-      order: [['created_at', 'DESC']]
+      include: {
+        emprendedor: {
+          select: {
+            id: true,
+            nombre: true,
+            correo: true,
+            telefono: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
     res.json({
@@ -50,19 +55,24 @@ export const createSolicitud = async (req, res, next) => {
   try {
     const { datos_personales, datos_negocio, datos_solicitud, documentos } = req.body;
 
-    const solicitud = await Solicitud.create({
-      emprendedor_id: req.user.id,
-      estado: 'borrador',
-      datos_personales,
-      datos_negocio,
-      datos_solicitud,
-      documentos
+    let solicitud = await prisma.solicitud.create({
+      data: {
+        emprendedorId: req.user.id,
+        estado: 'borrador',
+        datosPersonales: datos_personales,
+        datosNegocio: datos_negocio,
+        datosSolicitud: datos_solicitud,
+        documentos
+      }
     });
 
     // Calcular score automático si tiene todos los datos
     if (datos_negocio && datos_solicitud) {
       const score = calcularScore({ datos_negocio, datos_solicitud });
-      await solicitud.update({ score_automatico: score });
+      solicitud = await prisma.solicitud.update({
+        where: { id: solicitud.id },
+        data: { scoreAutomatico: score }
+      });
     }
 
     res.status(201).json({
@@ -80,7 +90,11 @@ export const createSolicitud = async (req, res, next) => {
 // @access  Private
 export const updateSolicitud = async (req, res, next) => {
   try {
-    const solicitud = await Solicitud.findByPk(req.params.id);
+    const solicitudId = parseInt(req.params.id);
+    
+    const solicitud = await prisma.solicitud.findUnique({
+      where: { id: solicitudId }
+    });
 
     if (!solicitud) {
       return res.status(404).json({
@@ -90,25 +104,31 @@ export const updateSolicitud = async (req, res, next) => {
     }
 
     // Verificar permisos
-    if (req.user.rol.nombre === 'emprendedor' && solicitud.emprendedor_id !== req.user.id) {
+    if (req.user.rol.nombre === 'emprendedor' && solicitud.emprendedorId !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'No autorizado para modificar esta solicitud'
       });
     }
 
-    await solicitud.update(req.body);
+    let solicitudActualizada = await prisma.solicitud.update({
+      where: { id: solicitudId },
+      data: req.body
+    });
 
     // Recalcular score si se actualizaron datos relevantes
     if (req.body.datos_negocio || req.body.datos_solicitud) {
-      const score = calcularScore(solicitud);
-      await solicitud.update({ score_automatico: score });
+      const score = calcularScore(solicitudActualizada);
+      solicitudActualizada = await prisma.solicitud.update({
+        where: { id: solicitudId },
+        data: { scoreAutomatico: score }
+      });
     }
 
     res.json({
       success: true,
       message: 'Solicitud actualizada exitosamente',
-      data: solicitud
+      data: solicitudActualizada
     });
   } catch (error) {
     next(error);
@@ -120,7 +140,11 @@ export const updateSolicitud = async (req, res, next) => {
 // @access  Private (Evaluador/Admin)
 export const aprobarSolicitud = async (req, res, next) => {
   try {
-    const solicitud = await Solicitud.findByPk(req.params.id);
+    const solicitudId = parseInt(req.params.id);
+    
+    const solicitud = await prisma.solicitud.findUnique({
+      where: { id: solicitudId }
+    });
 
     if (!solicitud) {
       return res.status(404).json({
@@ -136,38 +160,42 @@ export const aprobarSolicitud = async (req, res, next) => {
       });
     }
 
-    const { monto, plazoMeses } = solicitud.datos_solicitud;
+    const { monto, plazoMeses } = solicitud.datosSolicitud;
     const tasaInteres = 12; // 12% anual
 
-    // Crear cronograma
-    const cronograma = await Cronograma.create({
-      solicitud_id: solicitud.id,
-      tasa_interes: tasaInteres,
-      monto_total: monto,
-      plazo_meses: plazoMeses
+    // Generar cuotas
+    const cuotasData = calcularCuotas(monto, plazoMeses, tasaInteres);
+
+    // Crear cronograma con cuotas en una transacción
+    const cronograma = await prisma.cronograma.create({
+      data: {
+        solicitudId: solicitud.id,
+        tasaInteres: tasaInteres,
+        montoTotal: monto,
+        plazoMeses: plazoMeses,
+        cuotas: {
+          create: cuotasData
+        }
+      },
+      include: {
+        cuotas: true
+      }
     });
 
-    // Generar cuotas
-    const cuotas = calcularCuotas(monto, plazoMeses, tasaInteres);
-    
-    for (const cuotaData of cuotas) {
-      await Cuota.create({
-        cronograma_id: cronograma.id,
-        ...cuotaData
-      });
-    }
-
     // Actualizar solicitud
-    await solicitud.update({
-      estado: 'aprobado',
-      cronograma_id: cronograma.id
+    const solicitudActualizada = await prisma.solicitud.update({
+      where: { id: solicitudId },
+      data: {
+        estado: 'aprobado',
+        cronogramaId: cronograma.id
+      }
     });
 
     res.json({
       success: true,
       message: 'Solicitud aprobada y cronograma generado',
       data: {
-        solicitud,
+        solicitud: solicitudActualizada,
         cronograma
       }
     });

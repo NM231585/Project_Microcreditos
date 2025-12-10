@@ -11,14 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Logo } from '../Logo';
-import type { User } from "../../App";
 import { toast } from "sonner";
+import { useAuth } from "../../hooks/useAuth.js";
 
 interface RegisterProps {
-  onRegister: (user: User) => void;
-  onNavigate: (page: "login" | "landing") => void;
+  onNavigate: (page: "login" | "landing" | "dashboard") => void;
 }
 
 const departamentos = [
@@ -58,9 +57,9 @@ const municipiosPorDepartamento: Record<string, string[]> = {
 };
 
 export function Register({
-  onRegister,
   onNavigate,
 }: RegisterProps) {
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
@@ -71,8 +70,9 @@ export function Register({
     municipio: "",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -106,18 +106,32 @@ export function Register({
       return;
     }
 
-    const newUser: User = {
-      id: `emp${Date.now()}`,
-      nombre: formData.nombre,
-      correo: formData.correo,
-      telefono: formData.telefono,
-      rol: "emprendedor",
-      departamento: formData.departamento,
-      municipio: formData.municipio,
-    };
+    setLoading(true);
 
-    toast.success("Cuenta creada exitosamente!");
-    onRegister(newUser);
+    try {
+      const result = await register({
+        nombre: formData.nombre,
+        correo: formData.correo,
+        telefono: formData.telefono,
+        password: formData.password,
+        departamento: formData.departamento,
+        municipio: formData.municipio,
+        rol: 'emprendedor'
+      });
+
+      if (result.success) {
+        toast.success("¡Cuenta creada exitosamente!");
+        onNavigate("dashboard");
+      } else {
+        setError(result.error || "Error al crear la cuenta");
+        toast.error("Error al registrarse");
+      }
+    } catch (err) {
+      setError("Error de conexión con el servidor");
+      toast.error("No se pudo conectar con el servidor");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -317,8 +331,16 @@ export function Register({
             <Button
               type="submit"
               className="w-full bg-green-600 hover:bg-green-700"
+              disabled={loading}
             >
-              Crear Cuenta
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creando cuenta...
+                </>
+              ) : (
+                'Crear Cuenta'
+              )}
             </Button>
 
             <div className="text-center pt-4 border-t">

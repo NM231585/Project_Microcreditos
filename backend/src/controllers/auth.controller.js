@@ -1,6 +1,6 @@
-import models from '../models/index.js';
-
-const { Usuario, Rol } = models;
+import prisma from '../config/prisma.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 // @desc    Registrar nuevo usuario
 // @route   POST /api/auth/register
@@ -9,8 +9,19 @@ export const register = async (req, res, next) => {
   try {
     const { nombre, correo, telefono, password, departamento, municipio, rol } = req.body;
 
+    // Validar campos requeridos
+    if (!nombre || !correo || !telefono || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Todos los campos son requeridos: nombre, correo, telefono, password'
+      });
+    }
+
     // Validar que el correo no exista
-    const usuarioExistente = await Usuario.findOne({ where: { correo } });
+    const usuarioExistente = await prisma.usuario.findUnique({
+      where: { correo }
+    });
+
     if (usuarioExistente) {
       return res.status(400).json({
         success: false,
@@ -20,7 +31,9 @@ export const register = async (req, res, next) => {
 
     // Buscar el rol
     const rolNombre = rol || 'emprendedor';
-    const rolObj = await Rol.findOne({ where: { nombre: rolNombre } });
+    const rolObj = await prisma.rol.findUnique({
+      where: { nombre: rolNombre }
+    });
     
     if (!rolObj) {
       return res.status(400).json({
@@ -29,19 +42,28 @@ export const register = async (req, res, next) => {
       });
     }
 
+    // Hash de la contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Crear usuario
-    const usuario = await Usuario.create({
-      nombre,
-      correo,
-      telefono,
-      password,
-      departamento,
-      municipio,
-      rol_id: rolObj.id
+    const usuario = await prisma.usuario.create({
+      data: {
+        nombre,
+        correo,
+        telefono,
+        password: hashedPassword,
+        departamento,
+        municipio,
+        rolId: rolObj.id
+      }
     });
 
     // Generar token
-    const token = usuario.generateToken();
+    const token = jwt.sign(
+      { id: usuario.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
+    );
 
     res.status(201).json({
       success: true,
@@ -51,6 +73,8 @@ export const register = async (req, res, next) => {
         nombre: usuario.nombre,
         correo: usuario.correo,
         telefono: usuario.telefono,
+        departamento: usuario.departamento,
+        municipio: usuario.municipio,
         rol: rolNombre
       },
       token
@@ -75,14 +99,17 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // Buscar usuario
-    const usuario = await Usuario.findOne({ 
+    // Buscar usuario con rol
+    const usuario = await prisma.usuario.findUnique({
       where: { correo },
-      include: [{
-        model: Rol,
-        as: 'rol',
-        attributes: ['id', 'nombre']
-      }]
+      include: {
+        rol: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        }
+      }
     });
 
     if (!usuario) {
@@ -93,7 +120,7 @@ export const login = async (req, res, next) => {
     }
 
     // Verificar contraseña
-    const isMatch = await usuario.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, usuario.password);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -102,7 +129,11 @@ export const login = async (req, res, next) => {
     }
 
     // Generar token
-    const token = usuario.generateToken();
+    const token = jwt.sign(
+      { id: usuario.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
+    );
 
     res.json({
       success: true,

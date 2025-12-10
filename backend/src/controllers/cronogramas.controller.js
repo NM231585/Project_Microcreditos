@@ -1,24 +1,22 @@
-import models from '../models/index.js';
-
-const { Cronograma, Cuota, Solicitud } = models;
+import prisma from '../config/prisma.js';
 
 // @desc    Obtener cronograma por ID
 // @route   GET /api/cronogramas/:id
 // @access  Private
 export const getCronograma = async (req, res, next) => {
   try {
-    const cronograma = await Cronograma.findByPk(req.params.id, {
-      include: [
-        {
-          model: Cuota,
-          as: 'cuotas',
-          order: [['numero', 'ASC']]
+    const cronogramaId = parseInt(req.params.id);
+    
+    const cronograma = await prisma.cronograma.findUnique({
+      where: { id: cronogramaId },
+      include: {
+        cuotas: {
+          orderBy: {
+            numero: 'asc'
+          }
         },
-        {
-          model: Solicitud,
-          as: 'solicitud'
-        }
-      ]
+        solicitud: true
+      }
     });
 
     if (!cronograma) {
@@ -42,13 +40,17 @@ export const getCronograma = async (req, res, next) => {
 // @access  Private
 export const getCronogramaBySolicitud = async (req, res, next) => {
   try {
-    const cronograma = await Cronograma.findOne({
-      where: { solicitud_id: req.params.solicitudId },
-      include: [{
-        model: Cuota,
-        as: 'cuotas',
-        order: [['numero', 'ASC']]
-      }]
+    const solicitudId = parseInt(req.params.solicitudId);
+    
+    const cronograma = await prisma.cronograma.findUnique({
+      where: { solicitudId },
+      include: {
+        cuotas: {
+          orderBy: {
+            numero: 'asc'
+          }
+        }
+      }
     });
 
     if (!cronograma) {
@@ -72,10 +74,13 @@ export const getCronogramaBySolicitud = async (req, res, next) => {
 // @access  Private (Evaluador/Admin)
 export const marcarCuotaPagada = async (req, res, next) => {
   try {
-    const cuota = await Cuota.findOne({
+    const cuotaId = parseInt(req.params.cuotaId);
+    const cronogramaId = parseInt(req.params.id);
+    
+    const cuota = await prisma.cuota.findFirst({
       where: {
-        id: req.params.cuotaId,
-        cronograma_id: req.params.id
+        id: cuotaId,
+        cronogramaId: cronogramaId
       }
     });
 
@@ -93,15 +98,18 @@ export const marcarCuotaPagada = async (req, res, next) => {
       });
     }
 
-    await cuota.update({
-      pagado: true,
-      fecha_pago: new Date()
+    const cuotaActualizada = await prisma.cuota.update({
+      where: { id: cuotaId },
+      data: {
+        pagado: true,
+        fechaPago: new Date()
+      }
     });
 
     res.json({
       success: true,
       message: 'Cuota marcada como pagada',
-      data: cuota
+      data: cuotaActualizada
     });
   } catch (error) {
     next(error);
