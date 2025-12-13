@@ -59,6 +59,10 @@ CORS_ORIGIN=http://localhost:3000
 
 ### 3. Crear base de datos
 
+**Diagrama base de datos**
+![Diagrama Base de Datos](./assets/microcreditos_bd.drawio.png)
+
+
 **Opción A: Usando phpMyAdmin (XAMPP)**
 
 1. Abre XAMPP Control Panel
