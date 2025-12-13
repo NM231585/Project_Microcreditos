@@ -155,8 +155,8 @@ Este proyecto es privado y está en desarrollo.
 
 ## 👥 Autor
 
-- **NM231585**
-
+- **Michael Noyola**
+- **Emilio Ruiz**
 ---
 
 **Nota:** Asegúrate de tener XAMPP corriendo con MySQL antes de iniciar el backend.
