@@ -155,7 +155,8 @@ Este proyecto es privado y está en desarrollo.
 
 ## 👥 Autor
 
-- **NM231585**
+- **Michael Noyola**
+- **Emilio Ruiz**
 
 ---
 
