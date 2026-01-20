@@ -157,16 +157,12 @@ function App() {
         ) : null;
 
       case "cronograma":
-        const solicitud = solicitudes.find((s) => s.id === selectedSolicitudId);
-        const cronograma = cronogramas.find((c) => c.id === solicitud?.cronogramaId);
-        return user && solicitud && cronograma ? (
+        return user && selectedSolicitudId ? (
           <CronogramaView
-            solicitud={solicitud}
-            cronograma={cronograma}
+            solicitudId={selectedSolicitudId}
             onBack={() =>
               setCurrentPage(user.rol === "emprendedor" ? "dashboard" : "admin")
             }
-            onMarcarPago={() => {}}
             userRole={user.rol}
           />
         ) : null;

@@ -1,47 +1,123 @@
-﻿import { Card } from '../ui/card';
+﻿import { useState, useEffect } from 'react';
+import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Progress } from '../ui/progress';
 import { 
   ChevronLeft, Calendar, DollarSign, CheckCircle, 
-  Clock, TrendingUp, AlertCircle 
+  Clock, TrendingUp, AlertCircle, Loader2, Wallet 
 } from 'lucide-react';
-import type { Solicitud, Cronograma } from '../../App';
+import type { Cronograma, Cuota } from '../../types';
 import { toast } from 'sonner';
+import { useAuth } from '../../hooks/useAuth';
+import { cronogramasService } from '../../services/api';
+import { PaymentModal } from '../payment/PaymentModal';
 
 interface CronogramaViewProps {
-  solicitud: Solicitud;
-  cronograma: Cronograma;
+  solicitudId: string;
   onBack: () => void;
-  onMarcarPago: (cronogramaId: string, cuotaNumero: number) => void;
   userRole: 'emprendedor' | 'evaluador';
 }
 
 export function CronogramaView({ 
-  solicitud, 
-  cronograma, 
+  solicitudId, 
   onBack,
-  onMarcarPago,
   userRole 
 }: CronogramaViewProps) {
+  const { token } = useAuth();
+  const [cronograma, setCronograma] = useState<Cronograma | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [procesando, setProcesando] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedCuota, setSelectedCuota] = useState<Cuota | null>(null);
+
+  useEffect(() => {
+    loadCronograma();
+  }, [solicitudId]);
+
+  const loadCronograma = async () => {
+    if (!token) {
+      console.error('No token available');
+      return;
+    }
+    
+    console.log('Loading cronograma for solicitudId:', solicitudId);
+    setLoading(true);
+    try {
+      const response = await cronogramasService.getBySolicitud(token, solicitudId);
+      console.log('Cronograma response:', response);
+      setCronograma(response.data);
+    } catch (error: any) {
+      console.error('Error loading cronograma:', error);
+      toast.error('Error al cargar cronograma: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarcarPago = async (cuotaId: number) => {
+    if (!token || !cronograma) return;
+
+    setProcesando(true);
+    try {
+      await cronogramasService.marcarCuotaPagada(token, cronograma.id, cuotaId);
+      toast.success(`Pago de cuota registrado`);
+      await loadCronograma(); // Recargar cronograma
+    } catch (error: any) {
+      toast.error(error.message || 'Error al marcar pago');
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  const handleOpenPayment = (cuota: Cuota) => {
+    setSelectedCuota(cuota);
+    setPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = async () => {
+    if (!selectedCuota) return;
+    await handleMarcarPago(selectedCuota.id);
+    setPaymentModalOpen(false);
+    setSelectedCuota(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-green-600 mx-auto mb-4" />
+          <p className="text-gray-600">Cargando cronograma...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!cronograma) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <p className="text-gray-600">No se encontró el cronograma</p>
+          <Button onClick={onBack} className="mt-4">Volver</Button>
+        </div>
+      </div>
+    );
+  }
+
   const cuotasPagadas = cronograma.cuotas.filter(c => c.pagado).length;
   const totalCuotas = cronograma.cuotas.length;
   const progreso = (cuotasPagadas / totalCuotas) * 100;
   
   const totalPagado = cronograma.cuotas
     .filter(c => c.pagado)
-    .reduce((sum, c) => sum + c.total, 0);
+    .reduce((sum, c) => sum + Number(c.total), 0);
 
   const totalAPagar = cronograma.cuotas
-    .reduce((sum, c) => sum + c.total, 0);
+    .reduce((sum, c) => sum + Number(c.total), 0);
 
   const proximaCuota = cronograma.cuotas.find(c => !c.pagado);
-
-  const handleMarcarPago = (cuotaNumero: number) => {
-    onMarcarPago(cronograma.id, cuotaNumero);
-    toast.success(`Pago de cuota #${cuotaNumero} registrado`);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -53,7 +129,7 @@ export function CronogramaView({
             Volver
           </Button>
           <h1 className="text-3xl mb-2 text-gray-900">Cronograma de Pagos</h1>
-          <p className="text-gray-600">Solicitud #{solicitud.id} - {solicitud.emprendedorNombre}</p>
+          <p className="text-gray-600">Solicitud #{solicitudId}</p>
         </div>
 
         {/* Summary Cards */}
@@ -63,7 +139,7 @@ export function CronogramaView({
               <span className="text-sm text-gray-600">Monto Total</span>
               <DollarSign className="w-5 h-5 text-blue-600" />
             </div>
-            <p className="text-3xl text-gray-900">${solicitud.datosSolicitud?.monto.toLocaleString()}</p>
+            <p className="text-3xl text-gray-900">${cronograma.montoTotal.toLocaleString()}</p>
             <p className="text-xs text-gray-500 mt-1">Capital prestado</p>
           </Card>
 
@@ -92,11 +168,11 @@ export function CronogramaView({
             </div>
             {proximaCuota ? (
               <>
-                <p className="text-3xl text-gray-900">${proximaCuota.total.toFixed(2)}</p>
-                <p className="text-xs text-gray-500 mt-1">{proximaCuota.fecha}</p>
+                <p className="text-3xl text-gray-900">${Number(proximaCuota.total).toFixed(2)}</p>
+                <p className="text-xs text-gray-500 mt-1">{new Date(proximaCuota.fechaVencimiento).toLocaleDateString()}</p>
               </>
             ) : (
-              <p className="text-lg text-green-600">Pagado</p>
+              <p className="text-lg text-green-600">¡Pagado!</p>
             )}
           </Card>
         </div>
@@ -124,16 +200,16 @@ export function CronogramaView({
                 <div className="grid sm:grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-orange-700">Cuota #{proximaCuota.numero}</span>
-                    <p className="text-orange-900">${proximaCuota.total.toFixed(2)}</p>
+                    <p className="text-orange-900">${Number(proximaCuota.total).toFixed(2)}</p>
                   </div>
                   <div>
                     <span className="text-orange-700">Fecha de Vencimiento</span>
-                    <p className="text-orange-900">{proximaCuota.fecha}</p>
+                    <p className="text-orange-900">{new Date(proximaCuota.fechaVencimiento).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <span className="text-orange-700">Capital + Interés</span>
                     <p className="text-orange-900">
-                      ${proximaCuota.capital.toFixed(2)} + ${proximaCuota.interes.toFixed(2)}
+                      ${Number(proximaCuota.capital).toFixed(2)} + ${Number(proximaCuota.interes).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -148,27 +224,15 @@ export function CronogramaView({
           <div className="grid sm:grid-cols-3 gap-6 text-sm">
             <div>
               <span className="text-gray-600">Monto del Crédito</span>
-              <p className="text-gray-900">${solicitud.datosSolicitud?.monto.toLocaleString()}</p>
+              <p className="text-gray-900">${cronograma.montoTotal.toLocaleString()}</p>
             </div>
             <div>
               <span className="text-gray-600">Plazo</span>
-              <p className="text-gray-900">{solicitud.datosSolicitud?.plazoMeses} meses</p>
+              <p className="text-gray-900">{cronograma.plazoMeses} meses</p>
             </div>
             <div>
               <span className="text-gray-600">Tasa de Interés</span>
               <p className="text-gray-900">{cronograma.tasaInteres}% anual</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Tipo de Negocio</span>
-              <p className="text-gray-900">{solicitud.datosNegocio?.tipo}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Fecha de Aprobación</span>
-              <p className="text-gray-900">{solicitud.fechaCreacion}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Motivo</span>
-              <p className="text-gray-900">{solicitud.datosSolicitud?.motivo.substring(0, 30)}...</p>
             </div>
           </div>
         </Card>
@@ -187,7 +251,7 @@ export function CronogramaView({
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Saldo</TableHead>
                   <TableHead className="text-center">Estado</TableHead>
-                  {userRole === 'emprendedor' && <TableHead className="text-center">Acción</TableHead>}
+                  <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -205,13 +269,13 @@ export function CronogramaView({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
-                        {cuota.fecha}
+                        {new Date(cuota.fechaVencimiento).toLocaleDateString()}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">${cuota.capital.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${cuota.interes.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${cuota.total.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${cuota.saldo.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${Number(cuota.capital).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${Number(cuota.interes).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${Number(cuota.total).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${Number(cuota.saldo).toFixed(2)}</TableCell>
                     <TableCell className="text-center">
                       {cuota.pagado ? (
                         <Badge className="bg-green-600">
@@ -225,19 +289,40 @@ export function CronogramaView({
                         </Badge>
                       )}
                     </TableCell>
-                    {userRole === 'emprendedor' && (
-                      <TableCell className="text-center">
-                        {!cuota.pagado && cuota.numero === proximaCuota?.numero && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleMarcarPago(cuota.numero)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            Marcar Pago
-                          </Button>
-                        )}
-                      </TableCell>
-                    )}
+                    <TableCell className="text-center">
+                      {!cuota.pagado && cuota.numero === proximaCuota?.numero && (
+                        <div className="flex gap-2 justify-center">
+                          {userRole === 'emprendedor' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleOpenPayment(cuota)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                              disabled={procesando}
+                            >
+                              <Wallet className="w-4 h-4 mr-2" />
+                              Pagar en Línea
+                            </Button>
+                          )}
+                          {userRole === 'evaluador' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleMarcarPago(cuota.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                              disabled={procesando}
+                            >
+                              {procesando ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Procesando...
+                                </>
+                              ) : (
+                                'Marcar Pago'
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -250,13 +335,13 @@ export function CronogramaView({
               <div>
                 <span className="text-gray-600">Total Capital</span>
                 <p className="text-gray-900">
-                  ${cronograma.cuotas.reduce((sum, c) => sum + c.capital, 0).toFixed(2)}
+                  ${cronograma.cuotas.reduce((sum, c) => sum + Number(c.capital), 0).toFixed(2)}
                 </p>
               </div>
               <div>
                 <span className="text-gray-600">Total Intereses</span>
                 <p className="text-gray-900">
-                  ${cronograma.cuotas.reduce((sum, c) => sum + c.interes, 0).toFixed(2)}
+                  ${cronograma.cuotas.reduce((sum, c) => sum + Number(c.interes), 0).toFixed(2)}
                 </p>
               </div>
               <div>
@@ -282,6 +367,23 @@ export function CronogramaView({
           </ul>
         </Card>
       </div>
+
+      {/* Payment Modal */}
+      {selectedCuota && (
+        <PaymentModal
+          isOpen={paymentModalOpen}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            setSelectedCuota(null);
+          }}
+          cuota={{
+            numero: selectedCuota.numero,
+            monto: Number(selectedCuota.total),
+            fechaVencimiento: selectedCuota.fechaVencimiento
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 }

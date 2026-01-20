@@ -7,18 +7,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { 
   FileText, TrendingUp, LogOut, Eye, Users,
-  CheckCircle, XCircle, AlertCircle, RotateCcw, DollarSign, Sprout 
+  CheckCircle, XCircle, AlertCircle, RotateCcw, DollarSign, Sprout, Loader2 
 } from 'lucide-react';
 import { Logo } from '../Logo';
-import type { Solicitud, Cronograma } from '../../App';
+import type { Solicitud, Cronograma } from '../../types';
 import { toast } from 'sonner';
 
 interface AdminPanelProps {
   solicitudes: Solicitud[];
   cronogramas: Cronograma[];
   onLogout: () => void;
-  onUpdateSolicitud: (id: string, updates: Partial<Solicitud>) => void;
-  onAprobarSolicitud: (id: string) => void;
+  onUpdateSolicitud: (id: string, updates: Partial<Solicitud>) => Promise<void>;
+  onAprobarSolicitud: (id: string) => Promise<void>;
   onNavigate: (page: string) => void;
 }
 
@@ -33,6 +33,7 @@ export function AdminPanel({
   const [showDialog, setShowDialog] = useState(false);
   const [comentario, setComentario] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<string>('todas');
+  const [loading, setLoading] = useState(false);
 
   const solicitudesPendientes = solicitudes.filter(s => 
     s.estado === 'enviado' || s.estado === 'en_evaluacion'
@@ -51,35 +52,62 @@ export function AdminPanel({
     setComentario('');
   };
 
-  const handleAprobar = () => {
+  const handleAprobar = async () => {
     if (selectedSolicitud) {
-      onAprobarSolicitud(selectedSolicitud.id);
-      toast.success(`Solicitud ${selectedSolicitud.id} aprobada`);
-      setShowDialog(false);
+      setLoading(true);
+      try {
+        await onAprobarSolicitud(selectedSolicitud.id);
+        setShowDialog(false);
+      } catch (error) {
+        // Error ya manejado en App.tsx
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleRechazar = () => {
+  const handleRechazar = async () => {
     if (selectedSolicitud) {
-      onUpdateSolicitud(selectedSolicitud.id, { estado: 'rechazado' });
-      toast.error(`Solicitud ${selectedSolicitud.id} rechazada`);
-      setShowDialog(false);
+      setLoading(true);
+      try {
+        await onUpdateSolicitud(selectedSolicitud.id, { estado: 'rechazado' });
+        toast.error(`Solicitud rechazada`);
+        setShowDialog(false);
+      } catch (error) {
+        // Error ya manejado en App.tsx
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleDevolver = () => {
+  const handleDevolver = async () => {
     if (selectedSolicitud && comentario) {
-      onUpdateSolicitud(selectedSolicitud.id, { estado: 'devuelto' });
-      toast.info(`Solicitud ${selectedSolicitud.id} devuelta para corrección`);
-      setShowDialog(false);
+      setLoading(true);
+      try {
+        await onUpdateSolicitud(selectedSolicitud.id, { estado: 'devuelto' });
+        toast.info(`Solicitud devuelta para corrección`);
+        setShowDialog(false);
+      } catch (error) {
+        // Error ya manejado en App.tsx
+      } finally {
+        setLoading(false);
+      }
     } else {
       toast.error('Agrega un comentario para devolver la solicitud');
     }
   };
 
-  const handleIniciarEvaluacion = (id: string) => {
-    onUpdateSolicitud(id, { estado: 'en_evaluacion' });
-    toast.info('Evaluación iniciada');
+  const handleIniciarEvaluacion = async (id: string) => {
+    setLoading(true);
+    try {
+      await onUpdateSolicitud(id, { estado: 'en_evaluacion' });
+      toast.info('Evaluación iniciada');
+    } catch (error) {
+      // Error ya manejado
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getSolicitudesFiltradas = () => {
@@ -484,14 +512,18 @@ export function AdminPanel({
               {/* Documentos */}
               <div>
                 <h3 className="mb-3 text-gray-900">Documentos Adjuntos</h3>
-                <div className="space-y-2">
-                  {selectedSolicitud.documentos?.map((doc, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-3 bg-gray-50 rounded">
-                      <FileText className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm text-gray-900">{doc}</span>
-                    </div>
-                  ))}
-                </div>
+                {selectedSolicitud.documentos && selectedSolicitud.documentos.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedSolicitud.documentos.map((doc, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-3 bg-gray-50 rounded">
+                        <FileText className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm text-gray-900">{doc}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No se adjuntaron documentos</p>
+                )}
               </div>
 
               {/* Comentario para devolver */}
@@ -508,31 +540,78 @@ export function AdminPanel({
               )}
 
               {/* Actions */}
+              {/* Solicitud en estado BORRADOR o ENVIADO */}
+              {(selectedSolicitud.estado === 'borrador' || selectedSolicitud.estado === 'enviado') && (
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    onClick={() => handleIniciarEvaluacion(selectedSolicitud.id)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Iniciando...
+                      </>
+                    ) : (
+                      'Iniciar Evaluación'
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Solicitud en estado EN_EVALUACION */}
               {selectedSolicitud.estado === 'en_evaluacion' && (
                 <div className="flex gap-3 pt-4 border-t">
                   <Button
                     variant="outline"
                     onClick={handleDevolver}
                     className="flex-1"
+                    disabled={loading}
                   >
-                    <RotateCcw className="w-4 h-4 mr-2" />
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                    )}
                     Devolver
                   </Button>
                   <Button
                     variant="destructive"
                     onClick={handleRechazar}
                     className="flex-1"
+                    disabled={loading}
                   >
-                    <XCircle className="w-4 h-4 mr-2" />
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <XCircle className="w-4 h-4 mr-2" />
+                    )}
                     Rechazar
                   </Button>
                   <Button
                     onClick={handleAprobar}
                     className="flex-1 bg-green-600 hover:bg-green-700"
+                    disabled={loading}
                   >
-                    <CheckCircle className="w-4 h-4 mr-2" />
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                    )}
                     Aprobar
                   </Button>
+                </div>
+              )}
+
+              {/* Solicitud APROBADA o RECHAZADA - Solo mostrar info */}
+              {(selectedSolicitud.estado === 'aprobado' || selectedSolicitud.estado === 'rechazado') && (
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-gray-600 text-center">
+                    {selectedSolicitud.estado === 'aprobado' 
+                      ? '✅ Esta solicitud ya fue aprobada' 
+                      : '❌ Esta solicitud fue rechazada'}
+                  </p>
                 </div>
               )}
             </div>
