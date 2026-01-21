@@ -35,4 +35,4 @@ export interface Cuota {
   saldo: number;
   pagado: boolean;
 }
-export type Page = "landing" | "login" | "register" | "dashboard" | "nueva-solicitud" | "admin" | "cronograma";
+export type Page = "landing" | "login" | "register" | "dashboard" | "nueva-solicitud" | "admin" | "cronograma"| "funcionality";

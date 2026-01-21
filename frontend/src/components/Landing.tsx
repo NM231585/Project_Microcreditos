@@ -4,7 +4,7 @@ import { CheckCircle2, Clock, Shield, ChevronRight, Sprout } from 'lucide-react'
 import { Logo } from './Logo';
 
 interface LandingProps {
-  onNavigate: (page: 'login' | 'register') => void;
+  onNavigate: (page: 'login' | 'register' | 'funcionality') => void;
 }
 
 export function Landing({ onNavigate }: LandingProps) {
@@ -53,6 +53,7 @@ export function Landing({ onNavigate }: LandingProps) {
               size="lg" 
               variant="outline"
               className="text-base sm:text-lg px-6 sm:px-8 w-full sm:w-auto"
+              onClick={() => onNavigate('funcionality')}
             >
               Ver Cómo Funciona
             </Button>
