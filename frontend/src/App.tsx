@@ -8,6 +8,7 @@ import { EmprendedorDashboard } from "./components/dashboard/EmprendedorDashboar
 import { SolicitudForm } from "./components/solicitud/SolicitudForm";
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { CronogramaView } from "./components/cronograma/CronogramaView";
+import { Functionality } from "./components/funcionality/Funcionality";
 import { Toaster } from "./components/ui/sonner";
 import { solicitudesService, cronogramasService } from "./services/api";
 import { toast } from "sonner";
@@ -166,6 +167,9 @@ function App() {
             userRole={user.rol}
           />
         ) : null;
+
+      case "funcionality":
+        return <Functionality onNavigate={setCurrentPage} />;
 
       default:
         return <Landing onNavigate={setCurrentPage} />;
