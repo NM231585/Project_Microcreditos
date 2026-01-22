@@ -3,8 +3,9 @@ import { Card } from './ui/card';
 import { CheckCircle2, Clock, Shield, ChevronRight, Sprout } from 'lucide-react';
 import { Logo } from './Logo';
 
+// Props de la componente Landing 
 interface LandingProps {
-  onNavigate: (page: 'login' | 'register') => void;
+  onNavigate: (page: 'login' | 'register' | 'funcionality') => void;
 }
 
 export function Landing({ onNavigate }: LandingProps) {
@@ -20,7 +21,7 @@ export function Landing({ onNavigate }: LandingProps) {
           <div className="hidden sm:block">
             <Logo variant="full" size="md" />
           </div>
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-2 sm:gap-3 ">
             <Button variant="ghost" onClick={() => onNavigate('login')} className="text-sm sm:text-base px-3 sm:px-4">
               Iniciar Sesión
             </Button>
@@ -53,6 +54,7 @@ export function Landing({ onNavigate }: LandingProps) {
               size="lg" 
               variant="outline"
               className="text-base sm:text-lg px-6 sm:px-8 w-full sm:w-auto"
+              onClick={() => onNavigate('funcionality')}
             >
               Ver Cómo Funciona
             </Button>
@@ -193,9 +195,9 @@ export function Landing({ onNavigate }: LandingProps) {
             <div>
               <h4 className="mb-3 sm:mb-4">Contacto</h4>
               <ul className="space-y-2 text-sm sm:text-base text-gray-400">
-                <li>📞 +591 800-12345</li>
-                <li>✉️ info@vermer.com</li>
-                <li>📍 Santa Cruz, Bolivia</li>
+                <li>📞 +503 2222-2222</li>
+                <li>✉️ info@vemer.com</li>
+                <li>📍 El Salvador, San Salvador</li>
               </ul>
             </div>
             <div>
@@ -216,7 +218,7 @@ export function Landing({ onNavigate }: LandingProps) {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-sm sm:text-base text-gray-400">
-            <p>&copy; 2025 VERMER. Todos los derechos reservados.</p>
+            <p>&copy; 2025 VEMER. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

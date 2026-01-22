@@ -27,7 +27,7 @@ export const calcularCuotas = (monto, plazoMeses, tasaAnual, fechaInicio = new D
     
     cuotas.push({
       numero: i + 1,
-      fecha_vencimiento: fechaVencimiento.toISOString().split('T')[0],
+      fechaVencimiento: fechaVencimiento.toISOString(), // ISO-8601 completo
       capital: Math.round(capital * 100) / 100,
       interes: Math.round(interes * 100) / 100,
       total: Math.round(cuotaFija * 100) / 100,

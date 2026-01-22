@@ -160,7 +160,18 @@ export const aprobarSolicitud = async (req, res, next) => {
       });
     }
 
-    const { monto, plazoMeses } = solicitud.datosSolicitud;
+    // Extraer datos de la solicitud (JSON field)
+    const datosSolicitud = solicitud.datosSolicitud || {};
+    const monto = datosSolicitud.monto || 0;
+    const plazoMeses = datosSolicitud.plazoMeses || 12;
+
+    if (!monto || monto <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'La solicitud no tiene un monto válido'
+      });
+    }
+
     const tasaInteres = 12; // 12% anual
 
     // Generar cuotas
@@ -186,8 +197,7 @@ export const aprobarSolicitud = async (req, res, next) => {
     const solicitudActualizada = await prisma.solicitud.update({
       where: { id: solicitudId },
       data: {
-        estado: 'aprobado',
-        cronogramaId: cronograma.id
+        estado: 'aprobado'
       }
     });
 
@@ -196,7 +206,10 @@ export const aprobarSolicitud = async (req, res, next) => {
       message: 'Solicitud aprobada y cronograma generado',
       data: {
         solicitud: solicitudActualizada,
-        cronograma
+        cronograma: {
+          id: cronograma.id,
+          totalCuotas: cronograma.cuotas.length
+        }
       }
     });
   } catch (error) {

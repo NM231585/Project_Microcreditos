@@ -6,7 +6,7 @@ import {
   PlusCircle, Eye, Clock, CheckCircle, XCircle, AlertCircle, Sprout 
 } from 'lucide-react';
 import { Logo } from '../Logo';
-import type { User, Solicitud, Cronograma } from '../../App';
+import type { User, Solicitud, Cronograma } from '../../types';
 
 interface DashboardProps {
   user: User;
@@ -32,14 +32,14 @@ export function EmprendedorDashboard({
 
   // Calcular próximos pagos
   const proximosPagos = solicitudesAprobadas.flatMap(sol => {
-    const cronograma = cronogramas.find(c => c.id === sol.cronogramaId);
+    const cronograma = cronogramas.find(c => c.solicitudId === sol.id);
     if (!cronograma) return [];
     const proximaCuota = cronograma.cuotas.find(c => !c.pagado);
     if (!proximaCuota) return [];
     return [{
       solicitudId: sol.id,
-      monto: proximaCuota.total,
-      fecha: proximaCuota.fecha,
+      monto: Number(proximaCuota.total),
+      fecha: new Date(proximaCuota.fechaVencimiento).toLocaleDateString(),
       numeroCuota: proximaCuota.numero
     }];
   }).sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
@@ -112,7 +112,7 @@ export function EmprendedorDashboard({
                 </div>
                 {proximosPagos.length > 0 ? (
                   <>
-                    <p className="text-2xl sm:text-3xl text-gray-900">${proximosPagos[0].monto.toFixed(2)}</p>
+                    <p className="text-2xl sm:text-3xl text-gray-900">${proximosPagos[0].monto.toLocaleString()}</p>
                     <p className="text-xs text-gray-500 mt-1">{proximosPagos[0].fecha}</p>
                   </>
                 ) : (
@@ -194,7 +194,7 @@ export function EmprendedorDashboard({
                             </div>
                           </div>
                           <div className="flex sm:flex-col gap-2">
-                            {solicitud.estado === 'aprobado' && solicitud.cronogramaId && (
+                            {solicitud.estado === 'aprobado' && (
                               <Button 
                                 variant="outline" 
                                 size="sm"

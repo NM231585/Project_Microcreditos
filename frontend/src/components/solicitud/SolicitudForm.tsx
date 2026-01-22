@@ -9,14 +9,14 @@ import { Progress } from '../ui/progress';
 import { Alert, AlertDescription } from '../ui/alert';
 import { 
   User, Briefcase, DollarSign, Paperclip, 
-  ChevronLeft, ChevronRight, Check, AlertCircle 
+  ChevronLeft, ChevronRight, Check, AlertCircle, Loader2 
 } from 'lucide-react';
-import type { User as UserType, Solicitud } from '../../App';
+import type { User as UserType } from '../../types';
 import { toast } from 'sonner';
 
 interface SolicitudFormProps {
   user: UserType;
-  onSubmit: (solicitud: Solicitud) => void;
+  onSubmit: (solicitudData: any) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -35,6 +35,7 @@ const tiposNegocio = [
 export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
 
   // Paso 1: Datos Personales
   const [datosPersonales, setDatosPersonales] = useState({
@@ -125,35 +126,40 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
     }
   };
 
-  const handleSubmit = (asBorrador: boolean = false) => {
+  const handleSubmit = async (asBorrador: boolean = false) => {
     if (!asBorrador && documentos.length === 0) {
       toast.error('Por favor adjunta al menos un documento');
       return;
     }
 
-    const solicitud: Solicitud = {
-      id: `sol${Date.now()}`,
-      emprendedorId: user.id,
-      emprendedorNombre: user.nombre,
-      estado: asBorrador ? 'borrador' : 'enviado',
-      fechaCreacion: new Date().toISOString().split('T')[0],
-      datosPersonales: datosPersonales,
-      datosNegocio: {
-        tipo: datosNegocio.tipo,
-        descripcion: datosNegocio.descripcion,
-        ingresoMensual: parseFloat(datosNegocio.ingresoMensual),
-        produccion: datosNegocio.produccion
-      },
-      datosSolicitud: {
-        monto: parseFloat(datosSolicitud.monto),
-        plazoMeses: parseInt(datosSolicitud.plazoMeses),
-        motivo: datosSolicitud.motivo
-      },
-      documentos: documentos
-    };
+    setLoading(true);
 
-    toast.success(asBorrador ? 'Solicitud guardada como borrador' : 'Solicitud enviada con éxito!');
-    onSubmit(solicitud);
+    try {
+      // Formato de datos para el backend
+      const solicitudData = {
+        datos_personales: datosPersonales,
+        datos_negocio: {
+          tipo: datosNegocio.tipo,
+          descripcion: datosNegocio.descripcion,
+          ingresoMensual: parseFloat(datosNegocio.ingresoMensual),
+          produccion: datosNegocio.produccion
+        },
+        datos_solicitud: {
+          monto: parseFloat(datosSolicitud.monto),
+          plazoMeses: parseInt(datosSolicitud.plazoMeses),
+          motivo: datosSolicitud.motivo
+        },
+        documentos: documentos,
+        estado: asBorrador ? 'borrador' : 'enviado'
+      };
+
+      await onSubmit(solicitudData);
+      // El toast de éxito y score se muestra en App.tsx
+    } catch (error: any) {
+      toast.error(error.message || 'Error al enviar solicitud');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const progress = (currentStep / 4) * 100;
@@ -504,8 +510,16 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                 <Button
                   variant="outline"
                   onClick={() => handleSubmit(true)}
+                  disabled={loading}
                 >
-                  Guardar Borrador
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar Borrador'
+                  )}
                 </Button>
               )}
               
@@ -513,6 +527,7 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                 <Button
                   onClick={handleNext}
                   className="bg-green-600 hover:bg-green-700"
+                  disabled={loading}
                 >
                   Siguiente
                   <ChevronRight className="w-4 h-4 ml-2" />
@@ -521,9 +536,19 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                 <Button
                   onClick={() => handleSubmit(false)}
                   className="bg-green-600 hover:bg-green-700"
+                  disabled={loading}
                 >
-                  <Check className="w-4 h-4 mr-2" />
-                  Enviar Solicitud
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Enviar Solicitud
+                    </>
+                  )}
                 </Button>
               )}
             </div>

@@ -8,6 +8,7 @@ import { EmprendedorDashboard } from "./components/dashboard/EmprendedorDashboar
 import { SolicitudForm } from "./components/solicitud/SolicitudForm";
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { CronogramaView } from "./components/cronograma/CronogramaView";
+import { Functionality } from "./components/funcionality/Funcionality";
 import { Toaster } from "./components/ui/sonner";
 import { solicitudesService, cronogramasService } from "./services/api";
 import { toast } from "sonner";
@@ -157,19 +158,18 @@ function App() {
         ) : null;
 
       case "cronograma":
-        const solicitud = solicitudes.find((s) => s.id === selectedSolicitudId);
-        const cronograma = cronogramas.find((c) => c.id === solicitud?.cronogramaId);
-        return user && solicitud && cronograma ? (
+        return user && selectedSolicitudId ? (
           <CronogramaView
-            solicitud={solicitud}
-            cronograma={cronograma}
+            solicitudId={selectedSolicitudId}
             onBack={() =>
               setCurrentPage(user.rol === "emprendedor" ? "dashboard" : "admin")
             }
-            onMarcarPago={() => {}}
             userRole={user.rol}
           />
         ) : null;
+
+      case "funcionality":
+        return <Functionality onNavigate={setCurrentPage} />;
 
       default:
         return <Landing onNavigate={setCurrentPage} />;

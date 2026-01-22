@@ -66,9 +66,23 @@ async function main() {
     },
   });
 
+  // Crear usuario administrador
+  const admin = await prisma.usuario.upsert({
+    where: { correo: 'admin@test.com' },
+    update: {},
+    create: {
+      nombre: 'Admin Sistema',
+      correo: 'admin@test.com',
+      telefono: '555-0303',
+      password: hashedPassword,
+      rolId: rolAdmin.id,
+    },
+  });
+
   console.log('✅ Usuarios de prueba creados');
   console.log('📧 Emprendedor: emprendedor@test.com / test123');
   console.log('📧 Evaluador: evaluador@test.com / test123');
+  console.log('📧 Admin: admin@test.com / test123');
 }
 
 main()
