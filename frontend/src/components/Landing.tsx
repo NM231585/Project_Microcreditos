@@ -21,6 +21,8 @@ export function Landing({ onNavigate }: LandingProps) {
           <div className="hidden sm:block">
             <Logo variant="full" size="md" />
           </div>
+          <p className="hidden text-center sm:text-sm md:text-sm lg:text-sm sm:block">
+             Sembrando confianza, cosechando el futuro de tu emprendimiento rural.</p>
           <div className="flex gap-2 sm:gap-3 ">
             <Button variant="ghost" onClick={() => onNavigate('login')} className="text-sm sm:text-base px-3 sm:px-4">
               Iniciar Sesión
