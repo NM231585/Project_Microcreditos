@@ -6,7 +6,7 @@ API REST para la plataforma de gestión de microcréditos, construida con Node.j
 
 - **Node.js** - Runtime de JavaScript
 - **Express** - Framework web
-- **Sequelize** - ORM para MySQL
+- **Prisma** - ORM para MySQL
 - **MySQL** - Base de datos (XAMPP)
 - **JWT** - Autenticación con tokens
 - **Bcrypt** - Hash de contraseñas
@@ -50,7 +50,7 @@ DB_PASSWORD=
 DB_DIALECT=mysql
 
 # JWT
-JWT_SECRET=microcreditos_secret_key_2024
+JWT_SECRET=microcreditos_secret_key_2025
 JWT_EXPIRE=7d
 
 # CORS
@@ -62,7 +62,6 @@ CORS_ORIGIN=http://localhost:3000
 **Diagrama base de datos**
 ![Diagrama Base de Datos](./assets/microcreditos_bd.drawio.png)
 
-
 **Opción A: Usando phpMyAdmin (XAMPP)**
 
 1. Abre XAMPP Control Panel
@@ -72,12 +71,27 @@ CORS_ORIGIN=http://localhost:3000
 5. Copia y pega el contenido de `database/init.sql`
 6. Haz clic en "Continuar"
 
-**Opción B: Usando MySQL Workbench**
+**Opción B: Usando Prisma Migrations**
 
-1. Abre MySQL Workbench
-2. Conecta a localhost:3306 (usuario: root, sin contraseña)
-3. Abre el archivo `database/init.sql`
-4. Ejecuta el script
+1. Asegúrate de que MySQL esté corriendo en XAMPP
+2. Ejecuta las migraciones de Prisma:
+
+```bash
+# Generar el cliente de Prisma
+npx prisma generate
+
+# Aplicar las migraciones a la base de datos
+npx prisma migrate deploy
+
+# O si es la primera vez, ejecuta:
+npx prisma migrate dev --name init
+```
+
+3. (Opcional) Visualiza la base de datos con Prisma Studio:
+
+```bash
+npx prisma studio
+```
 
 ### 4. Iniciar el servidor
 
@@ -241,17 +255,12 @@ Authorization: Bearer {token}
 
 ```
 backend/
+├── prisma/
+│   ├── schema.prisma            # Esquema de base de datos (modelos)
+│   └── seed.js                  # Datos iniciales (roles)
 ├── src/
 │   ├── config/
-│   │   ├── database.js       # Configuración de Sequelize
-│   │   └── config.json        # Config para Sequelize CLI
-│   ├── models/
-│   │   ├── index.js           # Inicialización de modelos
-│   │   ├── Rol.js
-│   │   ├── Usuario.js
-│   │   ├── Solicitud.js
-│   │   ├── Cronograma.js
-│   │   └── Cuota.js
+│   │   └── prisma.js            # Cliente de Prisma
 │   ├── controllers/
 │   │   ├── auth.controller.js
 │   │   ├── solicitudes.controller.js
@@ -266,15 +275,18 @@ backend/
 │   │   ├── role.middleware.js
 │   │   └── error.middleware.js
 │   ├── utils/
-│   │   ├── cronograma.util.js  # Cálculo de cuotas
+│   │   ├── cronograma.util.js   # Cálculo de cuotas
 │   │   └── scoring.util.js      # Cálculo de score
 │   └── server.js                # Servidor principal
 ├── database/
-│   └── init.sql                 # Script de inicialización
+│   └── init.sql                 # Script SQL (opcional)
+├── assets/
+│   └── microcreditos_bd.drawio.png  # Diagrama de BD
 ├── .env                         # Variables de entorno
 ├── .env.example
 ├── .gitignore
 ├── package.json
+├── run-seed.js                  # Script para ejecutar seed
 └── README.md
 ```
 
@@ -326,11 +338,15 @@ El scoring automático evalúa solicitudes basándose en:
 
 ## 🧪 Probar la API
 
-### Usando Thunder Client (VS Code)
+### Usando EchoAPI (VS Code)
 
-1. Instala la extensión Thunder Client
-2. Importa la colección de endpoints
-3. Configura el token JWT en las variables
+1. Instala la extensión EchoAPI desde el marketplace de VS Code
+2. Crea una nueva colección para el proyecto de Microcréditos
+3. Configura las variables de entorno:
+   - `baseUrl`: `http://localhost:5000`
+   - `token`: (se llenará después del login)
+4. Crea los requests para cada endpoint
+5. Usa el token JWT en Authorization > Bearer Token
 
 ### Usando Postman
 

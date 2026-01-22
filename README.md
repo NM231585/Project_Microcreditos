@@ -6,15 +6,30 @@ Plataforma completa para la gestión de microcréditos dirigida a emprendedores 
 
 ```
 Microcreditos/
-├── frontend/          # Aplicación React (Puerto 3000)
+├── frontend/                    # Aplicación React (Puerto 3000)
 │   ├── src/
+│   │   ├── components/         # Componentes reutilizables
+│   │   ├── pages/              # Páginas de la aplicación
+│   │   ├── services/           # Servicios API
+│   │   ├── context/            # Context API (Auth)
+│   │   └── lib/                # Utilidades
 │   ├── public/
 │   └── package.json
-├── backend/           # API REST Node.js (Puerto 5000)
+├── backend/                     # API REST Node.js (Puerto 5000)
+│   ├── prisma/
+│   │   ├── schema.prisma       # Esquema de base de datos
+│   │   └── seed.js             # Datos iniciales
 │   ├── src/
+│   │   ├── config/             # Configuración (Prisma)
+│   │   ├── controllers/        # Lógica de negocio
+│   │   ├── routes/             # Rutas de la API
+│   │   ├── middlewares/        # Auth, roles, errores
+│   │   ├── utils/              # Utilidades (scoring, cuotas)
+│   │   └── server.js           # Servidor principal
 │   ├── database/
+│   │   └── init.sql            # Script SQL (opcional)
 │   └── package.json
-└── README.md          # Este archivo
+└── README.md                    # Este archivo
 ```
 
 ## 🚀 Inicio Rápido
@@ -215,7 +230,7 @@ node prisma/seed.js
 
 - Node.js
 - Express
-- Sequelize ORM
+- Prisma ORM
 - MySQL
 - JWT Authentication
 - Bcrypt
@@ -247,17 +262,13 @@ npm start        # Producción
 - ✅ Validación de datos
 - ✅ Protección de rutas por roles
 
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
 ## 📄 Licencia
 
-Este proyecto es privado y está en desarrollo.
+Este proyecto es **privado y propietario**. Desarrollado como proyecto educativo.
+
+**Todos los derechos reservados © 2025-2026**
+
+> Este código no está disponible para uso, modificación o distribución sin autorización expresa de los autores.
 
 ## 👥 Autor
 

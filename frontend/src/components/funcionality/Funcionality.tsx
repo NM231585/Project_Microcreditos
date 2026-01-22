@@ -5,8 +5,6 @@ import image2 from "../images/PrincipalImg.webp";
 import logo from "../../assets/9ff15ae8c40c117941b9a2e4108fd0cf3e6a7edf.png"
 
 
-// import "../../styles/funcionality.css";
-
 interface FunctionalityProps {
   onNavigate: (page: Page) => void;
 }
@@ -55,7 +53,7 @@ export function Functionality({ onNavigate }: FunctionalityProps) {
     },
   ];
   return (
-    <>
+    
   <body className="min-w-[320px] ">
         {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -67,6 +65,8 @@ export function Functionality({ onNavigate }: FunctionalityProps) {
           <div className="hidden sm:block">
             <Logo variant="full" size="md" />
           </div>
+          <p className="hidden text-center sm:text-sm md:text-sm lg:text-sm sm:block">
+             Sembrando confianza, cosechando el futuro de tu emprendimiento rural.</p>
          
           <div className="flex gap-2 sm:gap-3">
             <Button variant="ghost" onClick={() => onNavigate('login')} className="text-sm sm:text-base px-3 sm:px-4">
@@ -133,7 +133,9 @@ export function Functionality({ onNavigate }: FunctionalityProps) {
 
     {/* Botón CTA */}
     <div className="mt-10 sm:mt-16 text-center mt-10 mb-10">
-      <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 sm:py-3 px-6 sm:px-8 lg:px-10 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 text-sm sm:text-base md:text-lg lg:text-xl">
+      <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 sm:py-3 px-6 
+      sm:px-8 lg:px-10 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1
+      text-sm sm:text-base md:text-lg lg:text-xl" onClick={() => onNavigate('register')}>
         Comenzar mi solicitud ahora
       </button>
     </div>
@@ -158,7 +160,7 @@ export function Functionality({ onNavigate }: FunctionalityProps) {
 
   </body>
     
-    </>
+   
 
      
         
