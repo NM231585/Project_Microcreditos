@@ -3,6 +3,7 @@ import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
+import logo from "../../assets/9ff15ae8c40c117941b9a2e4108fd0cf3e6a7edf.png";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { 
@@ -129,11 +130,8 @@ export function AdminPanel({
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center">
           {/* Logo responsivo */}
-          <div className="block sm:hidden">
-            <Logo variant="icon" size="md" />
-          </div>
-          <div className="hidden sm:block">
-            <Logo variant="full" size="md" />
+          <div>
+              <img src={logo} alt="Logo" className="w-20" />
           </div>
           <Button variant="outline" size="sm" onClick={onLogout} className="text-xs sm:text-sm">
             <LogOut className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />

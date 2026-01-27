@@ -2,7 +2,7 @@ import type { Page } from "../../types";
 import { Button } from "../ui/button";
 import { Logo } from '../Logo';
 import image2 from "../images/PrincipalImg.webp";
-import logo from "../../assets/9ff15ae8c40c117941b9a2e4108fd0cf3e6a7edf.png"
+import logo from "../../assets/9ff15ae8c40c117941b9a2e4108fd0cf3e6a7edf.png";
 
 
 interface FunctionalityProps {
@@ -59,11 +59,8 @@ export function Functionality({ onNavigate }: FunctionalityProps) {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center">
           {/* Logo responsivo: isotipo en móvil, imaginotipo en tablet+ */}
-          <div className="block sm:hidden">
-            <Logo variant="icon" size="md" />
-          </div>
-          <div className="hidden sm:block">
-            <Logo variant="full" size="md" />
+          <div>
+            <img src={logo} alt="Logo" className="w-20" />
           </div>
           <p className="hidden text-center sm:text-sm md:text-sm lg:text-sm sm:block">
              Sembrando confianza, cosechando el futuro de tu emprendimiento rural.</p>
