@@ -44,7 +44,8 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
     telefono: user.telefono,
     direccion: '',
     departamento: user.departamento || '',
-    municipio: user.municipio || ''
+    municipio: user.municipio || '',
+    dui: user.dui || '',
   });
 
   // Paso 2: Datos del Negocio
@@ -237,14 +238,12 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cedula">DUI*</Label>
+                  <Label htmlFor="cedula">Dui</Label>
                   <Input
                     id="cedula"
-                    value={datosPersonales.cedula}
-                    onChange={(e) => setDatosPersonales(prev => ({ ...prev, cedula: e.target.value }))}
-                    className={errors.cedula ? 'border-red-500' : ''}
-                    placeholder="########-#"
-                    mask="________-_"
+                    value={datosPersonales.dui}
+                    disabled
+                    
                   />
                   {errors.cedula && <p className="text-sm text-red-600">{errors.cedula}</p>}
                 </div>

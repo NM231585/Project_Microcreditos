@@ -19,11 +19,13 @@ CREATE TABLE `usuarios` (
     `password` VARCHAR(255) NOT NULL,
     `departamento` VARCHAR(100) NULL,
     `municipio` VARCHAR(100) NULL,
+    `dui` VARCHAR(10) NULL,
     `rol_id` INTEGER NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `usuarios_correo_key`(`correo`),
+    UNIQUE INDEX `usuarios_dui_key`(`dui`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

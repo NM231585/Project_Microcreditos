@@ -68,6 +68,7 @@ export function Register({
     confirmPassword: "",
     departamento: "",
     municipio: "",
+    dui: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -83,7 +84,8 @@ export function Register({
       !formData.telefono ||
       !formData.password ||
       !formData.departamento ||
-      !formData.municipio
+      !formData.municipio   ||
+      !formData.dui
     ) {
       setError("Por favor completa todos los campos");
       return;
@@ -116,6 +118,7 @@ export function Register({
         password: formData.password,
         departamento: formData.departamento,
         municipio: formData.municipio,
+        dui: formData.dui,
         rol: 'emprendedor'
       });
 
@@ -224,6 +227,22 @@ export function Register({
                 }
                 required
               />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="dui">
+                DUI *
+              </Label>
+              <Input
+                id="dui"
+                value={formData.dui}
+                onChange={(e) => handleChange("dui", e.target.value)}
+                placeholder="########-#"
+                mask="________-_"
+                required
+              />
+              </div>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">

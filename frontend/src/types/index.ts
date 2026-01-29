@@ -6,6 +6,7 @@ export interface User {
   rol: "emprendedor" | "evaluador";
   departamento?: string;
   municipio?: string;
+  dui?: string;
 }
 export interface Solicitud {
   id: string;
