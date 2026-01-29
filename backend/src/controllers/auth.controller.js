@@ -7,13 +7,13 @@ import jwt from 'jsonwebtoken';
 // @access  Public
 export const register = async (req, res, next) => {
   try {
-    const { nombre, correo, telefono, password, departamento, municipio, rol } = req.body;
+    const { nombre, correo, telefono, password, departamento, municipio, dui, rol } = req.body;
 
     // Validar campos requeridos
-    if (!nombre || !correo || !telefono || !password) {
+    if (!nombre || !correo || !telefono || !password || !dui) {
       return res.status(400).json({
         success: false,
-        message: 'Todos los campos son requeridos: nombre, correo, telefono, password'
+        message: 'Todos los campos son requeridos: nombre, correo, telefono, password , dui'
       });
     }
 
@@ -54,6 +54,7 @@ export const register = async (req, res, next) => {
         password: hashedPassword,
         departamento,
         municipio,
+        dui,
         rolId: rolObj.id
       }
     });
@@ -75,7 +76,9 @@ export const register = async (req, res, next) => {
         telefono: usuario.telefono,
         departamento: usuario.departamento,
         municipio: usuario.municipio,
+        dui: usuario.dui,
         rol: rolNombre
+        
       },
       token
     });
@@ -145,6 +148,7 @@ export const login = async (req, res, next) => {
         telefono: usuario.telefono,
         departamento: usuario.departamento,
         municipio: usuario.municipio,
+        dui: usuario.dui,
         rol: usuario.rol.nombre
       },
       token
@@ -168,6 +172,7 @@ export const getMe = async (req, res, next) => {
         telefono: req.user.telefono,
         departamento: req.user.departamento,
         municipio: req.user.municipio,
+        dui: req.user.dui,
         rol: req.user.rol.nombre
       }
     });

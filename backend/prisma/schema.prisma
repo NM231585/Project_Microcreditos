@@ -29,6 +29,7 @@ model Usuario {
   password     String       @db.VarChar(255)
   departamento String?      @db.VarChar(100)
   municipio    String?      @db.VarChar(100)
+  dui          String?       @unique @db.VarChar(10)
   rolId        Int          @map("rol_id")
   rol          Rol          @relation(fields: [rolId], references: [id])
   solicitudes  Solicitud[]

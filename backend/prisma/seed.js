@@ -49,6 +49,7 @@ async function main() {
       password: hashedPassword,
       departamento: 'Santa Cruz',
       municipio: 'Warnes',
+      dui: '01234567-8',
       rolId: rolEmprendedor.id,
     },
   });
