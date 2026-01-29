@@ -237,13 +237,14 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cedula">Cédula de Identidad *</Label>
+                  <Label htmlFor="cedula">DUI*</Label>
                   <Input
                     id="cedula"
-                    placeholder="12345678"
                     value={datosPersonales.cedula}
                     onChange={(e) => setDatosPersonales(prev => ({ ...prev, cedula: e.target.value }))}
                     className={errors.cedula ? 'border-red-500' : ''}
+                    placeholder="########-#"
+                    mask="________-_"
                   />
                   {errors.cedula && <p className="text-sm text-red-600">{errors.cedula}</p>}
                 </div>
