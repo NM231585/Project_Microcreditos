@@ -3,16 +3,15 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import logo from "../../assets/9ff15ae8c40c117941b9a2e4108fd0cf3e6a7edf.png";
 import { 
-  DollarSign, FileText, Calendar, User, LogOut, 
+  DollarSign, FileText, User, LogOut, 
   PlusCircle, Eye, Clock, CheckCircle, XCircle, AlertCircle, Sprout 
 } from 'lucide-react';
 import { Logo } from '../Logo';
-import type { User, Solicitud, Cronograma } from '../../types';
+import type { User, Solicitud } from '../../types';
 
 interface DashboardProps {
   user: User;
   solicitudes: Solicitud[];
-  cronogramas: Cronograma[];
   onLogout: () => void;
   onNavigate: (page: 'nueva-solicitud') => void;
   onVerCronograma: (solicitudId: string) => void;
@@ -21,7 +20,6 @@ interface DashboardProps {
 export function EmprendedorDashboard({ 
   user, 
   solicitudes, 
-  cronogramas,
   onLogout, 
   onNavigate,
   onVerCronograma 
@@ -30,20 +28,6 @@ export function EmprendedorDashboard({
   const totalCreditos = solicitudesAprobadas.reduce((sum, s) => 
     sum + (s.datosSolicitud?.monto || 0), 0
   );
-
-  // Calcular próximos pagos
-  const proximosPagos = solicitudesAprobadas.flatMap(sol => {
-    const cronograma = cronogramas.find(c => c.solicitudId === sol.id);
-    if (!cronograma) return [];
-    const proximaCuota = cronograma.cuotas.find(c => !c.pagado);
-    if (!proximaCuota) return [];
-    return [{
-      solicitudId: sol.id,
-      monto: Number(proximaCuota.total),
-      fecha: new Date(proximaCuota.fechaVencimiento).toLocaleDateString(),
-      numeroCuota: proximaCuota.numero
-    }];
-  }).sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
 
   const getEstadoBadge = (estado: Solicitud['estado']) => {
     const configs = {
@@ -105,17 +89,11 @@ export function EmprendedorDashboard({
 
               <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs sm:text-sm text-gray-600">Próximo Pago</span>
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+                  <span className="text-xs sm:text-sm text-gray-600">Solicitudes Aprobadas</span>
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                 </div>
-                {proximosPagos.length > 0 ? (
-                  <>
-                    <p className="text-2xl sm:text-3xl text-gray-900">${proximosPagos[0].monto.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500 mt-1">{proximosPagos[0].fecha}</p>
-                  </>
-                ) : (
-                  <p className="text-base sm:text-lg text-gray-400">Sin pagos pendientes</p>
-                )}
+                <p className="text-2xl sm:text-3xl text-gray-900">{solicitudesAprobadas.length}</p>
+                <p className="text-xs text-gray-500 mt-1">Créditos activos</p>
               </Card>
             </div>
 
@@ -249,20 +227,7 @@ export function EmprendedorDashboard({
               </Button>
             </Card>
 
-            {proximosPagos.length > 0 && (
-              <Card className="p-4 sm:p-6">
-                <h3 className="text-sm sm:text-base mb-4 text-gray-900">Próximos Pagos</h3>
-                <div className="space-y-2 sm:space-y-3">
-                  {proximosPagos.slice(0, 3).map((pago, idx) => (
-                    <div key={idx} className="border-l-4 border-orange-500 pl-3 py-2">
-                      <p className="text-xs sm:text-sm text-gray-900">${pago.monto.toFixed(2)}</p>
-                      <p className="text-xs text-gray-600">Cuota #{pago.numeroCuota}</p>
-                      <p className="text-xs text-gray-500">{pago.fecha}</p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+
 
             <Card className="p-4 sm:p-6 bg-gradient-to-br from-green-50 to-blue-50">
               <h3 className="text-sm sm:text-base mb-2 text-gray-900">¿Necesitas Ayuda?</h3>

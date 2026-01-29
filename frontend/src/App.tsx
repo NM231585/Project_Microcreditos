@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
-import type { Solicitud, Cronograma, Cuota, Page } from './types';
+import type { Solicitud, Page } from './types';
 import { Landing } from "./components/Landing";
-import { Login } from "./components/auth/Login";
 import { Register } from "./components/auth/Register";
 import { EmprendedorDashboard } from "./components/dashboard/EmprendedorDashboard";
 import { SolicitudForm } from "./components/solicitud/SolicitudForm";
@@ -10,16 +9,14 @@ import { AdminPanel } from "./components/admin/AdminPanel";
 import { CronogramaView } from "./components/cronograma/CronogramaView";
 import { Functionality } from "./components/funcionality/Funcionality";
 import { Toaster } from "./components/ui/sonner";
-import { solicitudesService, cronogramasService } from "./services/api";
+import { solicitudesService } from "./services/api";
 import { toast } from "sonner";
 
 function App() {
   const { user, token, logout, isAuthenticated, loading: authLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>("landing");
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
-  const [cronogramas, setCronogramas] = useState<Cronograma[]>([]);
   const [selectedSolicitudId, setSelectedSolicitudId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   // Cargar solicitudes cuando hay usuario autenticado
   useEffect(() => {
@@ -30,15 +27,14 @@ function App() {
 
   // Navegación automática después de login
   useEffect(() => {
-    if (isAuthenticated && user && (currentPage === 'login' || currentPage === 'register')) {
+    if (isAuthenticated && user && (currentPage === 'login' || currentPage === 'register' || currentPage === 'landing')) {
       setCurrentPage(user.rol === 'emprendedor' ? 'dashboard' : 'admin');
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, currentPage]);
 
   const loadSolicitudes = async () => {
     if (!token) return;
     
-    setLoading(true);
     try {
       const response = await solicitudesService.getAll(token);
       setSolicitudes(response.data);
@@ -46,7 +42,6 @@ function App() {
       console.error('Error al cargar solicitudes:', error);
       toast.error('Error al cargar solicitudes');
     }
-    setLoading(false);
   };
 
   const handleCreateSolicitud = async (solicitudData: any) => {
@@ -98,7 +93,6 @@ function App() {
     logout();
     setCurrentPage('landing');
     setSolicitudes([]);
-    setCronogramas([]);
   };
 
   const renderPage = () => {
@@ -118,9 +112,6 @@ function App() {
       case "landing":
         return <Landing onNavigate={setCurrentPage} />;
 
-      case "login":
-        return <Login onNavigate={setCurrentPage} />;
-
       case "register":
         return <Register onNavigate={setCurrentPage} />;
 
@@ -129,7 +120,6 @@ function App() {
           <EmprendedorDashboard
             user={user}
             solicitudes={solicitudes.filter((s) => s.emprendedorId === user.id)}
-            cronogramas={cronogramas}
             onLogout={handleLogout}
             onNavigate={setCurrentPage}
             onVerCronograma={handleVerCronograma}
@@ -149,7 +139,6 @@ function App() {
         return user ? (
           <AdminPanel
             solicitudes={solicitudes}
-            cronogramas={cronogramas}
             onLogout={handleLogout}
             onUpdateSolicitud={handleUpdateSolicitud}
             onAprobarSolicitud={handleAprobarSolicitud}

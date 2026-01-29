@@ -2,7 +2,9 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { CheckCircle2, Clock, Shield, ChevronRight, Sprout } from 'lucide-react';
 import { Logo } from './Logo';
+import { LoginModal } from './auth/LoginModal';
 import logo from "../assets/9ff15ae8c40c117941b9a2e4108fd0cf3e6a7edf.png";
+import { useState } from 'react';
 
 // Props de la componente Landing 
 interface LandingProps {
@@ -10,6 +12,7 @@ interface LandingProps {
 }
 
 export function Landing({ onNavigate }: LandingProps) {
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Header */}
@@ -22,15 +25,32 @@ export function Landing({ onNavigate }: LandingProps) {
           <p className="hidden text-center sm:text-sm md:text-sm lg:text-sm sm:block">
              Sembrando confianza, cosechando el futuro de tu emprendimiento rural.</p>
           <div className="flex gap-2 sm:gap-3 ">
-            <Button variant="ghost" onClick={() => onNavigate('login')} className="text-sm sm:text-base px-3 sm:px-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => setLoginModalOpen(true)} 
+              className="text-sm sm:text-base px-3 sm:px-4"
+            >
               Iniciar Sesión
             </Button>
-            <Button onClick={() => onNavigate('register')} className="bg-green-600 hover:bg-green-700 text-sm sm:text-base px-3 sm:px-4">
+            <Button 
+              onClick={() => onNavigate('register')} 
+              className="bg-green-600 hover:bg-green-700 text-sm sm:text-base px-3 sm:px-4"
+            >
               Registrarse
             </Button>
           </div>
         </div>
       </header>
+
+      {/* Login Modal */}
+      <LoginModal
+        open={loginModalOpen}
+        onOpenChange={setLoginModalOpen}
+        onLoginSuccess={() => {
+          // El modal se cierra automáticamente y el usuario es redirigido por App.tsx
+        }}
+        onNavigateToRegister={() => onNavigate('register')}
+      />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
