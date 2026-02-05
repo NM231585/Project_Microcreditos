@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import prisma from './config/prisma.js';
 
 // Importar rutas
@@ -9,9 +11,14 @@ import authRoutes from './routes/auth.routes.js';
 import usuariosRoutes from './routes/usuarios.routes.js';
 import solicitudesRoutes from './routes/solicitudes.routes.js';
 import cronogramasRoutes from './routes/cronogramas.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 // Importar middleware de errores
 import { errorHandler } from './middlewares/error.middleware.js';
+
+// Para __dirname en ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Cargar variables de entorno
 dotenv.config();
@@ -27,6 +34,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+
+// Servir archivos estáticos desde uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Rutas
 app.get('/', (req, res) => {
@@ -47,6 +57,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/solicitudes', solicitudesRoutes);
 app.use('/api/cronogramas', cronogramasRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Middleware de manejo de errores (debe ir al final)
 app.use(errorHandler);

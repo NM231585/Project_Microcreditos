@@ -126,8 +126,28 @@ export const cronogramasService = {
   },
 };
 
+// Servicio de Upload
+export const uploadService = {
+  uploadFiles: async (files, token) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const response = await fetch(`${API_URL}/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    return handleResponse(response);
+  }
+};
+
 export default {
   auth: authService,
   solicitudes: solicitudesService,
   cronogramas: cronogramasService,
+  upload: uploadService,
 };

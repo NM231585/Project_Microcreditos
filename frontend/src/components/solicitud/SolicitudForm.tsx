@@ -1,18 +1,19 @@
 ﻿import { useState } from 'react';
-import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Card } from '../ui/card';
 import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Progress } from '../ui/progress';
 import { Alert, AlertDescription } from '../ui/alert';
-import { 
-  User, Briefcase, DollarSign, Paperclip, 
-  ChevronLeft, ChevronRight, Check, AlertCircle, Loader2 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+  User, Briefcase, DollarSign, Paperclip,
+  ChevronLeft, ChevronRight, AlertCircle, FileText, X, Check, Loader2
 } from 'lucide-react';
-import type { User as UserType } from '../../types';
 import { toast } from 'sonner';
+import { uploadService } from '../../services/api.js';
+import type { User as UserType } from '../../types';
 
 interface SolicitudFormProps {
   user: UserType;
@@ -63,7 +64,7 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
   });
 
   // Paso 4: Documentos
-  const [documentos, setDocumentos] = useState<string[]>([]);
+  const [documentos, setDocumentos] = useState<File[]>([]);
 
   const steps = [
     { number: 1, title: 'Datos Personales', icon: User },
@@ -71,6 +72,10 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
     { number: 3, title: 'Monto y Plazo', icon: DollarSign },
     { number: 4, title: 'Documentos', icon: Paperclip }
   ];
+
+  // Tipos de negocio que requieren producción/volumen
+  const tiposConProduccion = ['Agricultura', 'Ganadería', 'Manufactura'];
+  const requiereProduccion = tiposConProduccion.includes(datosNegocio.tipo);
 
   const validateStep = (step: Step): boolean => {
     const newErrors: Record<string, string> = {};
@@ -86,7 +91,10 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
       if (!datosNegocio.ingresoMensual || parseFloat(datosNegocio.ingresoMensual) <= 0) {
         newErrors.ingresoMensual = 'Ingresa un ingreso mensual válido';
       }
-      if (!datosNegocio.produccion) newErrors.produccion = 'Describe tu producción';
+      // Solo validar producción para tipos de negocio que la requieren
+      if (requiereProduccion && !datosNegocio.produccion) {
+        newErrors.produccion = 'Describe tu producción/volumen';
+      }
     } else if (step === 3) {
       const monto = parseFloat(datosSolicitud.monto);
       const plazo = parseInt(datosSolicitud.plazoMeses);
@@ -104,6 +112,44 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
     return Object.keys(newErrors).length === 0;
   };
 
+  // Manejar carga de archivos
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      
+      // Validar tamaño (10MB max)
+      const invalidFiles = newFiles.filter(file => file.size > 10 * 1024 * 1024);
+      if (invalidFiles.length > 0) {
+        toast.error('Algunos archivos superan el tamaño máximo de 10MB');
+        return;
+      }
+      
+      // Validar cantidad total (máx 5)
+      if (documentos.length + newFiles.length > 5) {
+        toast.error('Máximo 5 archivos permitidos');
+        return;
+      }
+      
+      setDocumentos(prev => [...prev, ...newFiles]);
+      toast.success(`${newFiles.length} archivo(s) agregado(s)`);
+    }
+  };
+
+  // Subir archivos al servidor
+  const uploadFiles = async (): Promise<string[]> => {
+    if (documentos.length === 0) return [];
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No autenticado');
+      
+      const response = await uploadService.uploadFiles(documentos, token);
+      return response.files.map((f: any) => f.filename);
+    } catch (error: any) {
+      throw new Error('Error al subir archivos: ' + error.message);
+    }
+  };
+
   const handleNext = () => {
     if (validateStep(currentStep)) {
       if (currentStep < 4) {
@@ -118,14 +164,6 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const fileNames = Array.from(e.target.files).map(f => f.name);
-      setDocumentos(prev => [...prev, ...fileNames]);
-      toast.success(`${fileNames.length} documento(s) agregado(s)`);
-    }
-  };
-
   const handleSubmit = async (asBorrador: boolean = false) => {
     if (!asBorrador && documentos.length === 0) {
       toast.error('Por favor adjunta al menos un documento');
@@ -135,6 +173,9 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
     setLoading(true);
 
     try {
+      // Subir archivos primero
+      const filenames = await uploadFiles();
+      
       // Formato de datos para el backend
       const solicitudData = {
         datos_personales: datosPersonales,
@@ -149,7 +190,7 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
           plazoMeses: parseInt(datosSolicitud.plazoMeses),
           motivo: datosSolicitud.motivo
         },
-        documentos: documentos,
+        documentos: filenames, // Usar nombres de archivos subidos
         estado: asBorrador ? 'borrador' : 'enviado'
       };
 
@@ -342,17 +383,19 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                     {errors.ingresoMensual && <p className="text-sm text-red-600">{errors.ingresoMensual}</p>}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="produccion">Producción/Volumen *</Label>
-                    <Input
-                      id="produccion"
-                      placeholder="ej: 500kg mensuales"
-                      value={datosNegocio.produccion}
-                      onChange={(e) => setDatosNegocio(prev => ({ ...prev, produccion: e.target.value }))}
-                      className={errors.produccion ? 'border-red-500' : ''}
-                    />
-                    {errors.produccion && <p className="text-sm text-red-600">{errors.produccion}</p>}
-                  </div>
+                  {requiereProduccion && (
+                    <div className="space-y-2">
+                      <Label htmlFor="produccion">Producción/Volumen *</Label>
+                      <Input
+                        id="produccion"
+                        placeholder="ej: 500kg mensuales"
+                        value={datosNegocio.produccion}
+                        onChange={(e) => setDatosNegocio(prev => ({ ...prev, produccion: e.target.value }))}
+                        className={errors.produccion ? 'border-red-500' : ''}
+                      />
+                      {errors.produccion && <p className="text-sm text-red-600">{errors.produccion}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -465,16 +508,19 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                   <div className="space-y-2">
                     <Label>Documentos adjuntos ({documentos.length})</Label>
                     <div className="space-y-2">
-                      {documentos.map((doc, idx) => (
+                      {documentos.map((file, idx) => (
                         <div key={idx} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                          <Paperclip className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm text-gray-900 flex-1">{doc}</span>
+                          <FileText className="w-4 h-4 text-gray-600" />
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-900">{file.name}</p>
+                            <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setDocumentos(prev => prev.filter((_, i) => i !== idx))}
                           >
-                            Eliminar
+                            <X className="w-4 h-4" />
                           </Button>
                         </div>
                       ))}

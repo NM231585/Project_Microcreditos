@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { 
   FileText, TrendingUp, LogOut, Eye, Users,
-  CheckCircle, XCircle, AlertCircle, RotateCcw, DollarSign, Sprout, Loader2 
+  CheckCircle, XCircle, AlertCircle, RotateCcw, DollarSign, Sprout, Loader2, Download, ExternalLink
 } from 'lucide-react';
 import { Logo } from '../Logo';
 import type { Solicitud, Cronograma } from '../../types';
@@ -513,9 +513,37 @@ export function AdminPanel({
                 {selectedSolicitud.documentos && selectedSolicitud.documentos.length > 0 ? (
                   <div className="space-y-2">
                     {selectedSolicitud.documentos.map((doc, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-3 bg-gray-50 rounded">
-                        <FileText className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm text-gray-900">{doc}</span>
+                      <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-900 flex-1 truncate">{doc}</span>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(`http://localhost:5000/uploads/${doc}`, '_blank')}
+                            className="flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Ver
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = `http://localhost:5000/uploads/${doc}`;
+                              link.download = doc;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              toast.success('Descargando archivo...');
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            <Download className="w-4 h-4" />
+                            Descargar
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
