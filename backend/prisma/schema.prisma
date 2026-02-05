@@ -22,19 +22,19 @@ model Rol {
 }
 
 model Usuario {
-  id           Int          @id @default(autoincrement())
-  nombre       String       @db.VarChar(100)
-  correo       String       @unique @db.VarChar(100)
-  telefono     String       @db.VarChar(20)
-  password     String       @db.VarChar(255)
-  departamento String?      @db.VarChar(100)
-  municipio    String?      @db.VarChar(100)
-  dui          String?       @unique @db.VarChar(10)
-  rolId        Int          @map("rol_id")
-  rol          Rol          @relation(fields: [rolId], references: [id])
+  id           Int         @id @default(autoincrement())
+  nombre       String      @db.VarChar(100)
+  correo       String      @unique @db.VarChar(100)
+  telefono     String      @db.VarChar(20)
+  password     String      @db.VarChar(255)
+  departamento String?     @db.VarChar(100)
+  municipio    String?     @db.VarChar(100)
+  dui          String      @unique @db.VarChar(10)
+  rolId        Int         @map("rol_id")
+  rol          Rol         @relation(fields: [rolId], references: [id])
   solicitudes  Solicitud[]
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
   @@map("usuarios")
 }
@@ -49,19 +49,19 @@ enum EstadoSolicitud {
 }
 
 model Solicitud {
-  id              Int              @id @default(autoincrement())
-  emprendedorId   Int              @map("emprendedor_id")
-  emprendedor     Usuario          @relation(fields: [emprendedorId], references: [id], onDelete: Cascade)
-  estado          EstadoSolicitud  @default(borrador)
-  datosPersonales Json?            @map("datos_personales")
-  datosNegocio    Json?            @map("datos_negocio")
-  datosSolicitud  Json?            @map("datos_solicitud")
+  id              Int             @id @default(autoincrement())
+  emprendedorId   Int             @map("emprendedor_id")
+  emprendedor     Usuario         @relation(fields: [emprendedorId], references: [id], onDelete: Cascade)
+  estado          EstadoSolicitud @default(borrador)
+  datosPersonales Json?           @map("datos_personales")
+  datosNegocio    Json?           @map("datos_negocio")
+  datosSolicitud  Json?           @map("datos_solicitud")
   documentos      Json?
-  scoreAutomatico Decimal?         @map("score_automatico") @db.Decimal(5, 2)
-  observaciones   String?          @db.Text
+  scoreAutomatico Decimal?        @map("score_automatico") @db.Decimal(5, 2)
+  observaciones   String?         @db.Text
   cronograma      Cronograma?
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 
   @@index([emprendedorId])
   @@index([estado])
@@ -69,15 +69,15 @@ model Solicitud {
 }
 
 model Cronograma {
-  id          Int        @id @default(autoincrement())
-  solicitudId Int        @unique @map("solicitud_id")
-  solicitud   Solicitud  @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
-  tasaInteres Decimal    @default(12.00) @map("tasa_interes") @db.Decimal(5, 2)
-  montoTotal  Decimal    @map("monto_total") @db.Decimal(10, 2)
-  plazoMeses  Int        @map("plazo_meses")
+  id          Int       @id @default(autoincrement())
+  solicitudId Int       @unique @map("solicitud_id")
+  solicitud   Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  tasaInteres Decimal   @default(12.00) @map("tasa_interes") @db.Decimal(5, 2)
+  montoTotal  Decimal   @map("monto_total") @db.Decimal(10, 2)
+  plazoMeses  Int       @map("plazo_meses")
   cuotas      Cuota[]
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("cronogramas")
 }

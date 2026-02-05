@@ -13,7 +13,16 @@ export const register = async (req, res, next) => {
     if (!nombre || !correo || !telefono || !password || !dui) {
       return res.status(400).json({
         success: false,
-        message: 'Todos los campos son requeridos: nombre, correo, telefono, password , dui'
+        message: 'Todos los campos son requeridos: nombre, correo, telefono, password, dui'
+      });
+    }
+
+    // Validar formato DUI (########-#)
+    const duiRegex = /^\d{8}-\d$/;
+    if (!duiRegex.test(dui)) {
+      return res.status(400).json({
+        success: false,
+        message: 'El DUI debe tener el formato ########-# (8 dígitos, guión, 1 dígito)'
       });
     }
 
@@ -30,7 +39,7 @@ export const register = async (req, res, next) => {
     }
 
     // Buscar el rol
-    const rolNombre = rol || 'emprendedor';
+    const rolNombre = 'emprendedor';
     const rolObj = await prisma.rol.findUnique({
       where: { nombre: rolNombre }
     });

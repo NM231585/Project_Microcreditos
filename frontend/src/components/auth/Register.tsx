@@ -108,6 +108,12 @@ export function Register({
       return;
     }
 
+    // Validar formato DUI (########-#)
+    if (!/^\d{8}-\d$/.test(formData.dui)) {
+      setError("El DUI debe tener el formato ########-# (ejemplo: 12345678-9)");
+      return;
+    }
+
     setLoading(true);
 
     try {

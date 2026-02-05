@@ -40,7 +40,6 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
   // Paso 1: Datos Personales
   const [datosPersonales, setDatosPersonales] = useState({
     nombre: user.nombre,
-    cedula: '',
     telefono: user.telefono,
     direccion: '',
     departamento: user.departamento || '',
@@ -77,7 +76,7 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
-      if (!datosPersonales.cedula) newErrors.cedula = 'La cédula es requerida';
+      if (!datosPersonales.dui) newErrors.dui = 'El DUI es requerido';
       if (!datosPersonales.direccion) newErrors.direccion = 'La dirección es requerida';
       if (!datosPersonales.departamento) newErrors.departamento = 'El departamento es requerido';
       if (!datosPersonales.municipio) newErrors.municipio = 'El municipio es requerido';
@@ -238,14 +237,13 @@ export function SolicitudForm({ user, onSubmit, onCancel }: SolicitudFormProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cedula">Dui</Label>
+                  <Label htmlFor="dui">DUI</Label>
                   <Input
-                    id="cedula"
+                    id="dui"
                     value={datosPersonales.dui}
                     disabled
-                    
                   />
-                  {errors.cedula && <p className="text-sm text-red-600">{errors.cedula}</p>}
+                  {errors.dui && <p className="text-sm text-red-600">{errors.dui}</p>}
                 </div>
 
                 <div className="space-y-2">

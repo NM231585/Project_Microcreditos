@@ -439,8 +439,8 @@ export function AdminPanel({
                     <p className="text-gray-900">{selectedSolicitud.datosPersonales?.nombre}</p>
                   </div>
                   <div>
-                    <span className="text-gray-600">Cédula:</span>
-                    <p className="text-gray-900">{selectedSolicitud.datosPersonales?.cedula}</p>
+                    <span className="text-gray-600">DUI:</span>
+                    <p className="text-gray-900">{selectedSolicitud.datosPersonales?.dui}</p>
                   </div>
                   <div>
                     <span className="text-gray-600">Teléfono:</span>

@@ -63,6 +63,7 @@ async function main() {
       correo: 'evaluador@test.com',
       telefono: '555-0202',
       password: hashedPassword,
+      dui: '98765432-1',
       rolId: rolEvaluador.id,
     },
   });
@@ -76,6 +77,7 @@ async function main() {
       correo: 'admin@test.com',
       telefono: '555-0303',
       password: hashedPassword,
+      dui: '11223344-5',
       rolId: rolAdmin.id,
     },
   });
