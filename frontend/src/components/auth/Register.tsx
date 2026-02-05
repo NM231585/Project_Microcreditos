@@ -15,46 +15,13 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { Logo } from '../Logo';
 import { toast } from "sonner";
 import { useAuth } from "../../hooks/useAuth.js";
+import { departamentos, getMunicipios } from "../../data/elSalvador.js";
 
 interface RegisterProps {
   onNavigate: (page: "login" | "landing" | "dashboard") => void;
 }
 
-const departamentos = [
-  "La Paz",
-  "Cochabamba",
-  "Santa Cruz",
-  "Oruro",
-  "Potosí",
-  "Chuquisaca",
-  "Tarija",
-  "Beni",
-  "Pando",
-];
 
-const municipiosPorDepartamento: Record<string, string[]> = {
-  "Santa Cruz": [
-    "Santa Cruz de la Sierra",
-    "Montero",
-    "Warnes",
-    "Cotoca",
-    "La Guardia",
-  ],
-  "La Paz": [
-    "La Paz",
-    "El Alto",
-    "Achocalla",
-    "Viacha",
-    "Copacabana",
-  ],
-  Cochabamba: [
-    "Cochabamba",
-    "Quillacollo",
-    "Sacaba",
-    "Tiquipaya",
-    "Colcapirhua",
-  ],
-};
 
 export function Register({
   onNavigate,
@@ -155,7 +122,7 @@ export function Register({
   };
 
   const municipiosDisponibles = formData.departamento
-    ? municipiosPorDepartamento[formData.departamento] || []
+    ? getMunicipios(formData.departamento)
     : [];
 
   return (
